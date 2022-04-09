@@ -107,6 +107,15 @@ pub struct GUIPosition {
     pub y: GUILength,
 }
 
+impl Default for GUIPosition {
+    fn default() -> Self {
+        Self {
+            x: GUILength::default(),
+            y: GUILength::default(),
+        }
+    }
+}
+
 impl PartialEq for GUIPosition {
     fn eq(&self, other: &GUIPosition) -> bool {
         self.x == other.x && self.y == other.y

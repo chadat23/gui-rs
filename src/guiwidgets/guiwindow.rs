@@ -1,6 +1,10 @@
-use crate::guiprocessing::vertices::Vertex;
+use std::any::Any;
+
+use uuid::Uuid;
+
+use crate::guiprocessing::vertices::{Vertex, Triangles};
 use crate::guiproperties::guiposition::{GUILength, GUISize};
-use crate::guiproperties::guitraits::Widget;
+use crate::guiproperties::guitraits::{Parent, Widget};
 use crate::guiproperties::GUIColor;
 
 // #[derive(Clone, Copy)]
@@ -29,7 +33,7 @@ pub struct GUIWindow {
     // pub logical_scale: Option<f64>,
     // /// The human readable name of the window
     // pub name: &'static str,
-    pub id: i128,
+    pub id: u128,
 }
 
 impl Widget for GUIWindow {
@@ -37,17 +41,31 @@ impl Widget for GUIWindow {
         &self,
         parent_size: &GUISize,
         indice_offset: u16,
-    ) -> (Vec<Vertex>, Vec<u16>) {
-        (Vec::new(), Vec::new())
+    ) -> (Vec<Vertex>, Vec<u16>, Triangles) {
+        (Vec::new(), Vec::new(), Triangles::new())
     }
 
     fn get_size(&self) -> &GUISize {
         &self.size
     }
+
+    fn get_id(&self) -> &u128 {
+        &self.id
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
 }
 
-impl GUIWindow {
-    pub fn new(id: i128) -> Self {
+impl Parent for GUIWindow {}
+
+impl Default for GUIWindow {
+    fn default() -> Self {
         Self {
             title: "Form1",
             size: GUISize {
@@ -75,7 +93,7 @@ impl GUIWindow {
             // children: Vec::new(),
             // logical_scale: None,
             // name: DEFAULT_WINDOW_NAME,
-            id,
+            id: Uuid::new_v4().as_u128(),
         }
     }
 }

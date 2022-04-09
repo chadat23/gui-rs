@@ -1,8 +1,8 @@
-use winit::event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
+use winit::event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 
-use crate::guiproperties::guiposition::GUISize;
+use crate::guiproperties::guiposition::{GUISize, GUIPosition};
 // use crate::guiproperties::guitraits::{Widget, Parent};
 // use crate::guiresources::GUIResources;
 // use crate::guiwidgets::GUIWindow;
@@ -28,11 +28,12 @@ pub fn run(mut guibase: GUIBase, guiresources: GUIResources) {
     let window = processing_utils::set_window_properties(
         window,
         &guibase,
-        guibase.windows.get(&-1).unwrap().get_window(),
+        // guibase.windows.get(&-1).unwrap().get_window(),
+        guibase.get_base_window(),
     );
 
     // State::new uses async code, so we're going to wait for it to finish
-    let mut state: State = pollster::block_on(State::new(&window, guibase, guiresources));
+    let mut my_state: State = pollster::block_on(State::new(&window, guibase, guiresources));
 
     event_loop.run(move |event, _, control_flow| {
         match event {
@@ -40,32 +41,39 @@ pub fn run(mut guibase: GUIBase, guiresources: GUIResources) {
                 ref event,
                 window_id,
             } if window_id == window.id() => {
-                if !state.input(event) {
+                if !my_state.input(event) {
                     match event {
                         WindowEvent::CloseRequested
                         | WindowEvent::KeyboardInput {
                             input:
                                 KeyboardInput {
-                                    state: ElementState::Pressed,
+                                    state: winit::event::ElementState::Pressed,
                                     virtual_keycode: Some(VirtualKeyCode::Escape),
                                     ..
                                 },
                             ..
                         } => *control_flow = ControlFlow::Exit,
                         WindowEvent::Resized(physical_size) => {
-                            state.resize(GUISize::from_physical_pixels(
+                            my_state.resize(GUISize::from_physical_pixels(
                                 physical_size.width as f64,
                                 physical_size.height as f64,
-                                &state.guibase.logical_scale.unwrap(),
+                                &my_state.guibase.logical_scale.unwrap(),
                             ));
                         }
                         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                             // new_inner_size is &&mut so w have to dereference it twice
-                            state.resize(GUISize::from_physical_pixels(
+                            my_state.resize(GUISize::from_physical_pixels(
                                 new_inner_size.width as f64,
                                 new_inner_size.height as f64,
-                                &state.guibase.logical_scale.unwrap(),
+                                &my_state.guibase.logical_scale.unwrap(),
                             ));
+                        }
+                        WindowEvent::MouseInput { device_id, state, button, modifiers} => {
+                            my_state.mount_input(button)
+                        }
+                        WindowEvent::CursorMoved { device_id, position, modifiers } => {
+                            my_state.position(GUIPosition::from_physical_pixels(position.x, position.y, &my_state.guibase.logical_scale.unwrap()));
+                            println!("{:?}", position)
                         }
                         _ => {}
                     }
@@ -73,14 +81,14 @@ pub fn run(mut guibase: GUIBase, guiresources: GUIResources) {
             }
             Event::RedrawRequested(window_id) if window_id == window.id() => {
                 // state.update();
-                match state.render() {
+                match my_state.render() {
                     Ok(_) => {
                         // println!("good!");
                         // println!("{:?}", SystemTime::now());
                     }
                     // Reconfigure the surface if lost
                     Err(wgpu::SurfaceError::Lost) => {
-                        state.size;
+                        my_state.size;
                     }
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,

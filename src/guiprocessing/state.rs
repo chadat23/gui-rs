@@ -1,16 +1,18 @@
 use std::iter;
 
 use wgpu::util::DeviceExt;
-use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent};
+use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent, MouseButton};
 use winit::window::Window;
 
-use crate::guiproperties::guiposition::GUISize;
+use crate::guiproperties::guiposition::{GUISize, GUIPosition};
 use crate::guiresources::GUIResources;
 use crate::guiwidgets::{GUIBase, GUIButton, GUIWindow};
 
 use crate::guiprocessing::vertices::Vertex;
 // use crate::guiprocessing::vertices::{Vertex, INDICES, VERTICES};
 use crate::guiprocessing::processing_utils;
+
+use super::vertices::Triangles;
 
 pub struct State {
     surface: wgpu::Surface,
@@ -27,6 +29,11 @@ pub struct State {
     pub size: winit::dpi::PhysicalSize<u32>,
 
     pub guibase: GUIBase,
+
+    // vertices: Vec<Vertex>,
+    // indices: Triangles,
+    triangles: Triangles,
+    position: GUIPosition,
 }
 
 impl State {
@@ -125,7 +132,7 @@ impl State {
             multiview: None,
         });
 
-        let (vertices, indices) = processing_utils::make_vertices_and_indices(&guibase);
+        let (vertices, indices, triangles) = processing_utils::make_vertices_and_indices(&guibase);
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             // contents: bytemuck::cast_slice(VERTICES),
@@ -152,29 +159,14 @@ impl State {
             num_indices,
             size,
             guibase,
+            // vertices,
+            // indices,
+            triangles,
+            position: GUIPosition::default(),
         }
     }
     pub fn resize(&mut self, new_size: GUISize) {
-        // let mut a = &self.guibase.windows.get(&-1).unwrap().get_window_mut().size;
-        // a.width = new_size.width;
-        // let mut a = self.guibase.windows.get(&-1).unwrap().get_window_mut();
-        match self.guibase.windows.get(&-1) {
-            Some(gwindow) => {
-                let mut gwindow = gwindow;
-                let mut window = &gwindow.window;
-                let mut size = window.size;
-                size.width = new_size.width;
-                size.height = new_size.height;
-            },
-            None => {},
-        }
-        // let mut a = self.guibase.windows.get(&-1).unwrap().window.size;
-        // *a.width = new_size.width;
-
-        // self.guibase.windows.get(&-1).unwrap().window.size.width = new_size.width;
-
-        // self.guibase.windows.get(&-1).unwrap().get_window_mut().size.width = new_size.width;
-        // self.guibase.windows.get(&-1).unwrap().get_window_mut().size.height = new_size.height;
+        self.guibase.get_base_window_mut().size = new_size;
         self.config.width = new_size
             .width
             .get_physical_length(&self.guibase.logical_scale.unwrap())
@@ -194,6 +186,31 @@ impl State {
     #[warn(dead_code)]
     pub fn update(&mut self) {}
 
+    pub fn position(&mut self, position: GUIPosition) {
+        self.position = position;
+    }
+
+    pub fn mount_input(&mut self, button: &MouseButton) {
+        use MouseButton::*;
+
+        match button {
+            Left => {
+                println!("Left mouse button at position: {}, {}!", self.position.x.get_length(), self.position.y.get_length());
+                self.triangles.get_widget_id(&self.position);
+                // self.indices.get_widget_id();
+            },
+            Right => {
+                println!("Right mouse button!");
+            },
+            Middle => {
+                println!("Middle mouse button!");
+            },
+            Other(number) => {
+                println!("Button: {number}");
+            }
+        }
+    }
+
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
@@ -207,7 +224,7 @@ impl State {
             });
 
         {
-            let guiwindow = self.guibase.windows.get(&-1).unwrap().get_window();
+            let guiwindow = self.guibase.get_base_window();
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[wgpu::RenderPassColorAttachment {

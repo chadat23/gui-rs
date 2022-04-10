@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::guiprocessing::vertices::{Triangles, Vertex};
+use crate::guiprocessing::vertices::{LogicalVertex, Polygon};
 use crate::guiproperties::guiposition::GUISize;
 
 pub trait Widget {
@@ -8,7 +8,7 @@ pub trait Widget {
         &self,
         parent_size: &GUISize,
         indice_offset: u16,
-    ) -> (Vec<Vertex>, Vec<u16>, Triangles);
+    ) -> (Vec<LogicalVertex>, Vec<u16>, Polygon);
 
     fn get_size(&self) -> &GUISize;
 

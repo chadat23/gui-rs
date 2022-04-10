@@ -2,7 +2,7 @@ use std::any::Any;
 
 use uuid::Uuid;
 
-use crate::guiprocessing::vertices::{Vertex, Triangles};
+use crate::guiprocessing::vertices::{LogicalVertex, Polygon};
 use crate::guiproperties::guiposition::{GUILength, GUISize};
 use crate::guiproperties::guitraits::{Parent, Widget};
 use crate::guiproperties::GUIColor;
@@ -41,8 +41,11 @@ impl Widget for GUIWindow {
         &self,
         parent_size: &GUISize,
         indice_offset: u16,
-    ) -> (Vec<Vertex>, Vec<u16>, Triangles) {
-        (Vec::new(), Vec::new(), Triangles::new())
+    ) -> (Vec<LogicalVertex>, Vec<u16>, Polygon) {
+        let mut polygon = Polygon::default();
+        polygon.widget_id = self.id;
+
+        (Vec::new(), Vec::new(), polygon)
     }
 
     fn get_size(&self) -> &GUISize {

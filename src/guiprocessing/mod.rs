@@ -69,11 +69,10 @@ pub fn run(mut guibase: GUIBase, guiresources: GUIResources) {
                             ));
                         }
                         WindowEvent::MouseInput { device_id, state, button, modifiers} => {
-                            my_state.mount_input(button)
+                            my_state.mouse_input(button);
                         }
                         WindowEvent::CursorMoved { device_id, position, modifiers } => {
-                            my_state.position(GUIPosition::from_physical_pixels(position.x, position.y, &my_state.guibase.logical_scale.unwrap()));
-                            println!("{:?}", position)
+                            my_state.set_curser_position(GUIPosition::from_physical_pixels(position.x, position.y, &my_state.guibase.logical_scale.unwrap()));
                         }
                         _ => {}
                     }
@@ -83,8 +82,6 @@ pub fn run(mut guibase: GUIBase, guiresources: GUIResources) {
                 // state.update();
                 match my_state.render() {
                     Ok(_) => {
-                        // println!("good!");
-                        // println!("{:?}", SystemTime::now());
                     }
                     // Reconfigure the surface if lost
                     Err(wgpu::SurfaceError::Lost) => {

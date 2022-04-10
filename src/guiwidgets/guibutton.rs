@@ -1,11 +1,10 @@
-use core::num;
 use std::any::Any;
 
 use uuid::Uuid;
 
 use super::widget_utils;
 use super::widget_utils::arcs;
-use crate::guiprocessing::vertices::{Vertex, Triangles};
+use crate::guiprocessing::vertices::{LogicalVertex, Polygon};
 use crate::guiproperties::guiposition::{GUILength, GUIPosition, GUISize};
 use crate::guiproperties::guitraits::Widget;
 use crate::guiproperties::GUIColor;
@@ -47,8 +46,9 @@ impl Widget for GUIButton {
         &self,
         parent_size: &GUISize,
         indice_offset: u16,
-    ) -> (Vec<Vertex>, Vec<u16>, Triangles) {
+    ) -> (Vec<LogicalVertex>, Vec<u16>, Polygon) {
         const FASCET_COUNT: usize = 7;
+        // const FASCET_COUNT: usize = 1;
         let mut top_left_radius = arcs::make_top_left_arc(self.radius, FASCET_COUNT);
         top_left_radius = widget_utils::translate(
             top_left_radius,
@@ -91,10 +91,10 @@ impl Widget for GUIButton {
 
         let mut vertices = Vec::with_capacity(top_left_radius.len());
         for position in top_left_radius.iter() {
-            vertices.push(Vertex {
+            vertices.push(LogicalVertex {
                 position: [
-                    (position.x.get_length() / parent_size.width.get_length() - 1.) as f32,
-                    (-position.y.get_length() / parent_size.height.get_length() + 1.) as f32,
+                    position.x.get_length() as f32,
+                    position.y.get_length() as f32,
                     0.,
                 ],
                 color: [
@@ -102,42 +102,30 @@ impl Widget for GUIButton {
                     self.background_color.g as f32,
                     self.background_color.b as f32,
                 ],
-                // id: self.id as u128,
             });
         }
         let number_of_triangles = vertices.len() - 2;
         let mut indices = Vec::with_capacity(number_of_triangles * 3);
         let mut widget_id = Vec::with_capacity(number_of_triangles);
-        let mut triangles = Vec::with_capacity(top_left_radius.len() - 2);
         for i in 0..number_of_triangles {
             indices.push(indice_offset + 0);
             indices.push(indice_offset + (i + 1) as u16);
             indices.push(indice_offset + (i + 2) as u16);
             widget_id.push(self.id);
-            triangles.push([top_left_radius.get(0).unwrap().clone(), top_left_radius.get(i + 1).unwrap().clone(), top_left_radius.get(i + 2).unwrap().clone()]);
-            
         }
 
-        let triangles = Triangles {
-            triangles,
-            widget_id,
+        let polygon = Polygon {
+            start_index: indice_offset as usize,
+            end_index: indice_offset as usize + vertices.len(),
+            widget_id: self.id,
+            convex: true,
+            rendered: true
         };
 
-        (vertices, indices, triangles)
+        (vertices, indices, polygon)
     }
-
-    // fn set_position_from_pixels(&mut self, x: f64, y: f64) {
-    //     self.position = GUIPosition::from_pixels(x, y);
-    // }
-
-    // fn set_position_from_lengths(&mut self, x: GUILength, y: GUILength) {
-    //     self.position = GUIPosition::from_lengths(x, y);
-    // }
-
-    // fn set_position_from_position(&mut self, position: GUIPosition) {
-    //     self.position = position;
-    // }
 }
+
 impl Default for GUIButton {
     /// Returns a button with all of the default values.
     fn default() -> Self {

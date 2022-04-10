@@ -6,13 +6,12 @@ use winit::window::Window;
 
 use crate::guiproperties::guiposition::{GUISize, GUIPosition};
 use crate::guiresources::GUIResources;
-use crate::guiwidgets::{GUIBase, GUIButton, GUIWindow};
+use crate::guiwidgets::{GUIBase};
 
-use crate::guiprocessing::vertices::Vertex;
-// use crate::guiprocessing::vertices::{Vertex, INDICES, VERTICES};
+use crate::guiprocessing::vertices::LogicalVertex;
 use crate::guiprocessing::processing_utils;
 
-use super::vertices::Triangles;
+use super::vertices::{Polygon, Vertex};
 
 pub struct State {
     surface: wgpu::Surface,
@@ -30,10 +29,10 @@ pub struct State {
 
     pub guibase: GUIBase,
 
-    // vertices: Vec<Vertex>,
-    // indices: Triangles,
-    triangles: Triangles,
-    position: GUIPosition,
+    logical_vertices: Vec<LogicalVertex>,
+    polygons: Vec<Polygon>,
+    pub curser_position: GUIPosition,
+    clicked_widget_id: Option<u128>,
 }
 
 impl State {
@@ -132,7 +131,10 @@ impl State {
             multiview: None,
         });
 
-        let (vertices, indices, triangles) = processing_utils::make_vertices_and_indices(&guibase);
+        let (logical_vertices, indices, polygons) = processing_utils::make_vertices_and_indices(&guibase);
+        let width = guibase.get_base_window().size.width.get_length() as f32;
+        let height = guibase.get_base_window().size.height.get_length() as f32;
+        let vertices: Vec<Vertex> = logical_vertices.iter().map(|v| v.to_vertex(width, height)).collect();
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             // contents: bytemuck::cast_slice(VERTICES),
@@ -159,10 +161,10 @@ impl State {
             num_indices,
             size,
             guibase,
-            // vertices,
-            // indices,
-            triangles,
-            position: GUIPosition::default(),
+            logical_vertices,
+            polygons,
+            curser_position: GUIPosition::default(),
+            clicked_widget_id: None,
         }
     }
     pub fn resize(&mut self, new_size: GUISize) {
@@ -186,18 +188,37 @@ impl State {
     #[warn(dead_code)]
     pub fn update(&mut self) {}
 
-    pub fn position(&mut self, position: GUIPosition) {
-        self.position = position;
+    pub fn set_curser_position(&mut self, position: GUIPosition) {
+        self.curser_position = position;
     }
 
-    pub fn mount_input(&mut self, button: &MouseButton) {
+    pub fn mouse_input(&mut self, button: &MouseButton) {
         use MouseButton::*;
 
         match button {
             Left => {
-                println!("Left mouse button at position: {}, {}!", self.position.x.get_length(), self.position.y.get_length());
-                self.triangles.get_widget_id(&self.position);
-                // self.indices.get_widget_id();
+                let clicked_widget_id = processing_utils::get_clicked_widget(&self.polygons, &self.logical_vertices, &self.curser_position);
+                match self.clicked_widget_id {
+                    Some(last_id) => match clicked_widget_id {
+                        Some(this_id) => {
+                            if last_id == this_id {
+                                println!("You clicked widget id {last_id}");
+                            }
+                            self.clicked_widget_id = None;
+                        },
+                        None => {
+                            self.clicked_widget_id = None;
+                        },
+                    },
+                    None => match clicked_widget_id {
+                        Some(_) => {
+                            self.clicked_widget_id = clicked_widget_id;
+                        },
+                        None => {
+                            self.clicked_widget_id = None;
+                        }
+                    }
+                }
             },
             Right => {
                 println!("Right mouse button!");

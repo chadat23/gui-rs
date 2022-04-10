@@ -1,5 +1,6 @@
 use std::iter;
 
+use wgpu::{Buffer, Device};
 use wgpu::util::DeviceExt;
 use winit::event::{ElementState, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent};
 use winit::window::Window;
@@ -131,28 +132,7 @@ impl State {
             multiview: None,
         });
 
-        let (logical_vertices, indices, polygons) =
-            processing_utils::make_vertices_and_indices(&guibase);
-        let width = guibase.get_base_window().size.width.get_length() as f32;
-        let height = guibase.get_base_window().size.height.get_length() as f32;
-        let vertices: Vec<Vertex> = logical_vertices
-            .iter()
-            .map(|v| v.to_vertex(width, height))
-            .collect();
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            // contents: bytemuck::cast_slice(VERTICES),
-            contents: bytemuck::cast_slice(&vertices[..]),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            // contents: bytemuck::cast_slice(INDICES),
-            contents: bytemuck::cast_slice(&indices[..]),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-        // let num_indices = INDICES.len() as u32;
-        let num_indices = indices.len() as u32;
+        let (logical_vertices, polygons, vertex_buffer, index_buffer, num_indices) = make_wireframe_primitives(&guibase, &device);
 
         Self {
             surface,
@@ -252,6 +232,15 @@ impl State {
                 label: Some("Render Encoder"),
             });
 
+        if self.guibase.fixed_scale {
+            let (logical_vertices, polygons, vertex_buffer, index_buffer, num_indices) = make_wireframe_primitives(&self.guibase, &self.device);
+            self.logical_vertices = logical_vertices;
+            self.polygons = polygons;
+            self.vertex_buffer = vertex_buffer;
+            self.index_buffer = index_buffer;
+            self.num_indices = num_indices;
+        }
+
         {
             let guiwindow = self.guibase.get_base_window();
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -286,4 +275,31 @@ impl State {
 
         Ok(())
     }
+}
+
+fn make_wireframe_primitives(guibase: &GUIBase, device: &Device) -> (Vec<LogicalVertex>, Vec<Polygon>, Buffer, Buffer, u32) {
+    let (logical_vertices, indices, polygons) =
+        processing_utils::make_vertices_and_indices(&guibase);
+    let width = guibase.get_base_window().size.width.get_length() as f32;
+    let height = guibase.get_base_window().size.height.get_length() as f32;
+    let vertices: Vec<Vertex> = logical_vertices
+        .iter()
+        .map(|v| v.to_vertex(width, height))
+        .collect();
+    let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Vertex Buffer"),
+        // contents: bytemuck::cast_slice(VERTICES),
+        contents: bytemuck::cast_slice(&vertices[..]),
+        usage: wgpu::BufferUsages::VERTEX,
+    });
+    let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Index Buffer"),
+        // contents: bytemuck::cast_slice(INDICES),
+        contents: bytemuck::cast_slice(&indices[..]),
+        usage: wgpu::BufferUsages::INDEX,
+    });
+    // let num_indices = INDICES.len() as u32;
+    let num_indices = indices.len() as u32;
+
+    (logical_vertices, polygons, vertex_buffer, index_buffer, num_indices)
 }

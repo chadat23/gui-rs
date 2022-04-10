@@ -1,16 +1,25 @@
 use std::collections::HashMap;
 
 // use super::super::guiproperties::Widget;
-use super::{GUIButton, GUIWindow};
-use crate::guiproperties::guiposition::GUILength;
-use crate::guiproperties::guitraits::{Parent, Widget};
+use super::GUIWindow;
+use crate::guiproperties::guitraits::Widget;
 
 pub struct GUIBase {
+    /// The id number of the base window.
+    /// The first window to open upon starting the program.
     pub base_window: u128,
+    /// The set of all windows.
     pub windows: HashMap<u128, GWindow>,
+    /// The set of all widgets.
+    /// They're both children of the set of all windows, and other widgets.
     pub widgets: HashMap<u128, GWidget>,
     /// The scale that converts between the devices logical and physical pixels.
     pub logical_scale: Option<f64>,
+    /// Fixes the scale of the window contents.
+    /// If true, resizing doesn't rescale the window contents.
+    /// If false, resizing the window changes the size
+    /// of the window contents.
+    pub fixed_scale: bool,
 }
 
 impl GUIBase {
@@ -20,6 +29,7 @@ impl GUIBase {
             windows: HashMap::new(),
             widgets: HashMap::new(),
             logical_scale: None,
+            fixed_scale: true,
         }
     }
 

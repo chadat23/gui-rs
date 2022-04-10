@@ -1,6 +1,3 @@
-use std::cmp;
-use crate::guiproperties::guiposition::GUIPosition;
-
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
@@ -35,7 +32,7 @@ pub struct LogicalVertex {
 }
 
 impl LogicalVertex {
-    pub fn to_vertex(&self, width: f32, height: f32) -> Vertex{
+    pub fn to_vertex(&self, width: f32, height: f32) -> Vertex {
         let mut position = [0.0_f32; 3];
         position[0] = self.position[0] / width * 2. - 1.;
         position[1] = -self.position[1] / height * 2. + 1.;

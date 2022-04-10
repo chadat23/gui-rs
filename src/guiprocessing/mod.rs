@@ -2,10 +2,7 @@ use winit::event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 
-use crate::guiproperties::guiposition::{GUISize, GUIPosition};
-// use crate::guiproperties::guitraits::{Widget, Parent};
-// use crate::guiresources::GUIResources;
-// use crate::guiwidgets::GUIWindow;
+use crate::guiproperties::guiposition::{GUIPosition, GUISize};
 use crate::guiresources::GUIResources;
 use crate::guiwidgets::GUIBase;
 
@@ -22,13 +19,10 @@ pub fn run(mut guibase: GUIBase, guiresources: GUIResources) {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
     guibase.logical_scale = Some(window.scale_factor());
-    // guiwindow.set_id(0);
-    // (guiwindow.children, _) = window_building_utils::set_widget_ids(guiwindow.give_children(), 1);
     let guibase = guibase;
     let window = processing_utils::set_window_properties(
         window,
         &guibase,
-        // guibase.windows.get(&-1).unwrap().get_window(),
         guibase.get_base_window(),
     );
 
@@ -68,11 +62,24 @@ pub fn run(mut guibase: GUIBase, guiresources: GUIResources) {
                                 &my_state.guibase.logical_scale.unwrap(),
                             ));
                         }
-                        WindowEvent::MouseInput { device_id, state, button, modifiers} => {
+                        WindowEvent::MouseInput {
+                            device_id,
+                            state,
+                            button,
+                            modifiers,
+                        } => {
                             my_state.mouse_input(button);
                         }
-                        WindowEvent::CursorMoved { device_id, position, modifiers } => {
-                            my_state.set_curser_position(GUIPosition::from_physical_pixels(position.x, position.y, &my_state.guibase.logical_scale.unwrap()));
+                        WindowEvent::CursorMoved {
+                            device_id,
+                            position,
+                            modifiers,
+                        } => {
+                            my_state.set_curser_position(GUIPosition::from_physical_pixels(
+                                position.x,
+                                position.y,
+                                &my_state.guibase.logical_scale.unwrap(),
+                            ));
                         }
                         _ => {}
                     }
@@ -81,8 +88,7 @@ pub fn run(mut guibase: GUIBase, guiresources: GUIResources) {
             Event::RedrawRequested(window_id) if window_id == window.id() => {
                 // state.update();
                 match my_state.render() {
-                    Ok(_) => {
-                    }
+                    Ok(_) => {}
                     // Reconfigure the surface if lost
                     Err(wgpu::SurfaceError::Lost) => {
                         my_state.size;

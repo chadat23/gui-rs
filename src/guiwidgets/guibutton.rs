@@ -30,6 +30,10 @@ impl Widget for GUIButton {
         &self.size
     }
 
+    fn get_position(&self) -> &GUIPosition {
+        &self.position
+    }
+
     fn get_id(&self) -> &u128 {
         &self.id
     }
@@ -44,7 +48,7 @@ impl Widget for GUIButton {
 
     fn get_vertices_and_indices(
         &self,
-        parent_size: &GUISize,
+        parent_position: &GUIPosition,
         indice_offset: u16,
     ) -> (Vec<LogicalVertex>, Vec<u16>, Polygon) {
         const FASCET_COUNT: usize = 7;
@@ -93,8 +97,8 @@ impl Widget for GUIButton {
         for position in top_left_radius.iter() {
             vertices.push(LogicalVertex {
                 position: [
-                    position.x.get_length() as f32,
-                    position.y.get_length() as f32,
+                    (position.x.get_length() + parent_position.x.get_length()) as f32,
+                    (position.y.get_length() + parent_position.y.get_length()) as f32,
                     0.,
                 ],
                 color: [
@@ -119,7 +123,7 @@ impl Widget for GUIButton {
             end_index: indice_offset as usize + vertices.len(),
             widget_id: self.id,
             convex: true,
-            rendered: true
+            rendered: true,
         };
 
         (vertices, indices, polygon)

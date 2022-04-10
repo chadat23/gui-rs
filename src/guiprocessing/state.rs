@@ -1,15 +1,15 @@
 use std::iter;
 
 use wgpu::util::DeviceExt;
-use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent, MouseButton};
+use winit::event::{ElementState, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent};
 use winit::window::Window;
 
-use crate::guiproperties::guiposition::{GUISize, GUIPosition};
+use crate::guiproperties::guiposition::{GUIPosition, GUISize};
 use crate::guiresources::GUIResources;
-use crate::guiwidgets::{GUIBase};
+use crate::guiwidgets::GUIBase;
 
-use crate::guiprocessing::vertices::LogicalVertex;
 use crate::guiprocessing::processing_utils;
+use crate::guiprocessing::vertices::LogicalVertex;
 
 use super::vertices::{Polygon, Vertex};
 
@@ -131,10 +131,14 @@ impl State {
             multiview: None,
         });
 
-        let (logical_vertices, indices, polygons) = processing_utils::make_vertices_and_indices(&guibase);
+        let (logical_vertices, indices, polygons) =
+            processing_utils::make_vertices_and_indices(&guibase);
         let width = guibase.get_base_window().size.width.get_length() as f32;
         let height = guibase.get_base_window().size.height.get_length() as f32;
-        let vertices: Vec<Vertex> = logical_vertices.iter().map(|v| v.to_vertex(width, height)).collect();
+        let vertices: Vec<Vertex> = logical_vertices
+            .iter()
+            .map(|v| v.to_vertex(width, height))
+            .collect();
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             // contents: bytemuck::cast_slice(VERTICES),
@@ -197,7 +201,11 @@ impl State {
 
         match button {
             Left => {
-                let clicked_widget_id = processing_utils::get_clicked_widget(&self.polygons, &self.logical_vertices, &self.curser_position);
+                let clicked_widget_id = processing_utils::get_clicked_widget(
+                    &self.polygons,
+                    &self.logical_vertices,
+                    &self.curser_position,
+                );
                 match self.clicked_widget_id {
                     Some(last_id) => match clicked_widget_id {
                         Some(this_id) => {
@@ -205,27 +213,27 @@ impl State {
                                 println!("You clicked widget id {last_id}");
                             }
                             self.clicked_widget_id = None;
-                        },
+                        }
                         None => {
                             self.clicked_widget_id = None;
-                        },
+                        }
                     },
                     None => match clicked_widget_id {
                         Some(_) => {
                             self.clicked_widget_id = clicked_widget_id;
-                        },
+                        }
                         None => {
                             self.clicked_widget_id = None;
                         }
-                    }
+                    },
                 }
-            },
+            }
             Right => {
                 println!("Right mouse button!");
-            },
+            }
             Middle => {
                 println!("Middle mouse button!");
-            },
+            }
             Other(number) => {
                 println!("Button: {number}");
             }

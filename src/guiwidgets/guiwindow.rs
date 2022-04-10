@@ -3,7 +3,7 @@ use std::any::Any;
 use uuid::Uuid;
 
 use crate::guiprocessing::vertices::{LogicalVertex, Polygon};
-use crate::guiproperties::guiposition::{GUILength, GUISize};
+use crate::guiproperties::guiposition::{GUILength, GUIPosition, GUISize};
 use crate::guiproperties::guitraits::{Parent, Widget};
 use crate::guiproperties::GUIColor;
 
@@ -34,12 +34,13 @@ pub struct GUIWindow {
     // /// The human readable name of the window
     // pub name: &'static str,
     pub id: u128,
+    position: GUIPosition,
 }
 
 impl Widget for GUIWindow {
     fn get_vertices_and_indices(
         &self,
-        parent_size: &GUISize,
+        parent_position: &GUIPosition,
         indice_offset: u16,
     ) -> (Vec<LogicalVertex>, Vec<u16>, Polygon) {
         let mut polygon = Polygon::default();
@@ -50,6 +51,10 @@ impl Widget for GUIWindow {
 
     fn get_size(&self) -> &GUISize {
         &self.size
+    }
+
+    fn get_position(&self) -> &GUIPosition {
+        &self.position
     }
 
     fn get_id(&self) -> &u128 {
@@ -97,6 +102,7 @@ impl Default for GUIWindow {
             // logical_scale: None,
             // name: DEFAULT_WINDOW_NAME,
             id: Uuid::new_v4().as_u128(),
+            position: GUIPosition::default(),
         }
     }
 }

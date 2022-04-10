@@ -1,16 +1,18 @@
 use std::any::Any;
 
 use crate::guiprocessing::vertices::{LogicalVertex, Polygon};
-use crate::guiproperties::guiposition::GUISize;
+use crate::guiproperties::guiposition::{GUIPosition, GUISize};
 
 pub trait Widget {
     fn get_vertices_and_indices(
         &self,
-        parent_size: &GUISize,
+        parent_position: &GUIPosition,
         indice_offset: u16,
     ) -> (Vec<LogicalVertex>, Vec<u16>, Polygon);
 
     fn get_size(&self) -> &GUISize;
+
+    fn get_position(&self) -> &GUIPosition;
 
     fn get_id(&self) -> &u128;
 

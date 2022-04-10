@@ -3,7 +3,10 @@ use winit::window::Window;
 
 use super::vertices::{LogicalVertex, Polygon};
 use crate::{
-    guiproperties::{guiposition::{GUISize, GUIPosition}, guitraits::Widget},
+    guiproperties::{
+        guiposition::{GUIPosition, GUISize},
+        guitraits::Widget,
+    },
     guiwidgets::{GUIBase, GUIWindow},
 };
 
@@ -43,7 +46,9 @@ pub fn set_window_properties(window: Window, guibase: &GUIBase, guiwindow: &GUIW
     window
 }
 
-pub fn make_vertices_and_indices(guibase: &GUIBase) -> (Vec<LogicalVertex>, Vec<u16>, Vec<Polygon>) {
+pub fn make_vertices_and_indices(
+    guibase: &GUIBase,
+) -> (Vec<LogicalVertex>, Vec<u16>, Vec<Polygon>) {
     let mut all_vertices: Vec<LogicalVertex> = Vec::new();
     let mut all_indices: Vec<u16> = Vec::new();
     // let mut all_triangles: Triangles = Triangles::new();
@@ -56,7 +61,7 @@ pub fn make_vertices_and_indices(guibase: &GUIBase) -> (Vec<LogicalVertex>, Vec<
         for child_id in child_ids {
             let (vertices, indices, polygons) = make_child(
                 &guibase,
-                gwindow.get_window().get_size(),
+                gwindow.get_window().get_position(),
                 child_id,
                 index_offset,
             );
@@ -71,7 +76,12 @@ pub fn make_vertices_and_indices(guibase: &GUIBase) -> (Vec<LogicalVertex>, Vec<
     (all_vertices, all_indices, all_polygons)
 }
 
-fn make_child(guibase: &GUIBase, parent_size: &GUISize, widget_id: &u128, index_offset: u16) -> (Vec<LogicalVertex>, Vec<u16>, Vec<Polygon>) {
+fn make_child(
+    guibase: &GUIBase,
+    parent_position: &GUIPosition,
+    widget_id: &u128,
+    index_offset: u16,
+) -> (Vec<LogicalVertex>, Vec<u16>, Vec<Polygon>) {
     let mut all_vertices: Vec<LogicalVertex> = Vec::new();
     let mut all_indices: Vec<u16> = Vec::new();
     // let mut all_triangles: Triangles = Triangles::new();
@@ -79,17 +89,17 @@ fn make_child(guibase: &GUIBase, parent_size: &GUISize, widget_id: &u128, index_
     let gwidget = guibase.widgets.get(widget_id).unwrap();
     let (vertices, indices, polygon) = gwidget
         .get_widget()
-        .get_vertices_and_indices(parent_size, index_offset);
+        .get_vertices_and_indices(parent_position, index_offset);
     all_vertices.extend(vertices);
     // all_indices.extend(indices.iter());
     all_indices.extend(indices);
     // all_triangles.extend(triangles);
     all_polygons.push(polygon);
-    
+
     for child_id in gwidget.get_child_ids() {
         let (vertices, indices, polygons) = make_child(
             &guibase,
-            gwidget.get_widget().get_size(),
+            gwidget.get_widget().get_position(),
             child_id,
             all_vertices.len() as u16,
         );
@@ -102,14 +112,18 @@ fn make_child(guibase: &GUIBase, parent_size: &GUISize, widget_id: &u128, index_
     (all_vertices, all_indices, all_polygons)
 }
 
-pub fn get_clicked_widget(polygons: &Vec<Polygon>, vertices: &Vec<LogicalVertex>, position: &GUIPosition) -> Option<u128> {
+pub fn get_clicked_widget(
+    polygons: &Vec<Polygon>,
+    vertices: &Vec<LogicalVertex>,
+    position: &GUIPosition,
+) -> Option<u128> {
     let px = position.x.get_length() as f32;
     let py = position.y.get_length() as f32;
 
     for polygon in polygons.iter().rev() {
         if polygon.rendered {
             if is_inside_polygon(&vertices[polygon.start_index..polygon.end_index], px, py) {
-                return Some(polygon.widget_id)
+                return Some(polygon.widget_id);
             }
         }
     }

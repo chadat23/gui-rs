@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 // use super::super::guiproperties::Widget;
-use crate::guiproperties::guitraits::{Parent, Widget};
-use super::{GUIWindow, GUIButton};
+use super::{GUIButton, GUIWindow};
 use crate::guiproperties::guiposition::GUILength;
+use crate::guiproperties::guitraits::{Parent, Widget};
 
 pub struct GUIBase {
     pub base_window: u128,
@@ -63,8 +63,8 @@ impl GUIBase {
         if self.windows.contains_key(&parent_id) {
             let window = self.windows.get_mut(&parent_id).unwrap();
             window.children.push(child_id);
-        } else if self.widgets.contains_key(&parent_id) {            
-            let widget = self.windows.get_mut(&parent_id).unwrap();
+        } else if self.widgets.contains_key(&parent_id) {
+            let widget = self.widgets.get_mut(&parent_id).unwrap();
             widget.children.push(child_id);
         } else {
             panic!("oops")
